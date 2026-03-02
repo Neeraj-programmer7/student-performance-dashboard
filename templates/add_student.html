@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">Add Student</h2>
+
+<form method="POST" action="/add_student">
+
+    <div class="mb-3">
+        <label>Name</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Roll</label>
+        <input type="number" name="roll" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Attendance (%)</label>
+        <input type="number" step="0.01" name="attendance" class="form-control" required>
+    </div>
+
+    <hr>
+
+    <h5>Enter Marks</h5>
+
+    {% for subject in subjects %}
+    <div class="mb-3">
+        <label>{{ subject[1] }}</label>
+        <input type="number" step="0.01" 
+               name="subject_{{ subject[0] }}" 
+               class="form-control" required>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">
+        Add Student
+    </button>
+
+</form>
+
+{% endblock %}

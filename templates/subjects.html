@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">Manage Subjects</h2>
+
+<form method="POST" action="/add_subject" class="mb-4">
+    <div class="input-group">
+        <input type="text" name="subject_name"
+               class="form-control"
+               placeholder="Enter subject name" required>
+        <button class="btn btn-primary">Add Subject</button>
+    </div>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Subject Name</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for subject in subjects %}
+        <tr>
+            <td>{{ subject[0] }}</td>
+            <td>{{ subject[1] }}</td>
+            <td>
+                <a href="/delete_subject/{{ subject[0] }}"
+                   class="btn btn-danger btn-sm">
+                   Delete
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

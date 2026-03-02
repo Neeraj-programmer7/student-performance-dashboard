@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">Edit Student</h2>
+
+<form method="POST" action="/update/{{ student[0] }}">
+
+    <div class="mb-3">
+        <label>Name</label>
+        <input type="text" name="name" class="form-control"
+               value="{{ student[1] }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Roll</label>
+        <input type="number" name="roll" class="form-control"
+               value="{{ student[2] }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Attendance</label>
+        <input type="number" step="0.01" name="attendance"
+               class="form-control"
+               value="{{ student[3] }}" required>
+    </div>
+
+    <hr>
+    <h5>Marks</h5>
+
+    {% for subject in subjects %}
+    <div class="mb-3">
+        <label>{{ subject[1] }}</label>
+        <input type="number" step="0.01"
+               name="subject_{{ subject[0] }}"
+               class="form-control"
+               value="{{ marks_dict.get(subject[0], 0) }}"
+               required>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-success">
+        Update Student
+    </button>
+
+</form>
+
+{% endblock %}
