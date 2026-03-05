@@ -1,9 +1,12 @@
 import csv
-from flask import Response
+from flask import Response, session
 from flask import Flask, render_template, request, redirect
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
 app = Flask(__name__)
+
+app.secret_key = "supersecretkey"
 
 def init_db():
     conn = sqlite3.connect("students.db")
@@ -14,8 +17,10 @@ def init_db():
     CREATE TABLE IF NOT EXISTS students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        roll INTEGER UNIQUE NOT NULL,
-        attendance REAL NOT NULL
+        roll INTEGER NOT NULL,
+        attendance REAL NOT NULL,
+        user_id INTEGER,
+        FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
 
@@ -43,6 +48,23 @@ def init_db():
     conn.close()
 
 init_db()   
+
+def create_user_table():
+    conn = sqlite3.connect("students.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+create_user_table()
 
 def insert_default_subjects():
     conn = sqlite3.connect("students.db")
@@ -93,21 +115,24 @@ def calculate_risk(attendance, avg):
 # Home Page
 @app.route("/")
 def home():
+    if "user_id" not in session:
+        return redirect("/login")
 
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT 
-            students.id,
-            students.name,
-            students.roll,
-            students.attendance,
-            AVG(marks.marks)
-        FROM students
-        LEFT JOIN marks ON students.id = marks.student_id
-        GROUP BY students.id
-    """)
+    SELECT 
+        students.id,
+        students.name,
+        students.roll,
+        students.attendance,
+        AVG(marks.marks)
+    FROM students
+    LEFT JOIN marks ON students.id = marks.student_id
+    WHERE students.user_id = ?
+    GROUP BY students.id
+    """, (session["user_id"],))
 
     rows = cursor.fetchall()
 
@@ -151,6 +176,10 @@ def home():
 # Show Add Student Form
 @app.route("/add")
 def add_form():
+
+    if "user_id" not in session:
+        return redirect("/login")
+    
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
@@ -166,6 +195,9 @@ def add_form():
 @app.route("/add_student", methods=["POST"])
 def add_student():
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     name = request.form["name"]
     roll = request.form["roll"]
     attendance = float(request.form["attendance"])
@@ -175,10 +207,12 @@ def add_student():
 
     # Insert student first
     try:
+        user_id = session["user_id"]
+
         cursor.execute("""
-            INSERT INTO students (name, roll, attendance)
-            VALUES (?, ?, ?)
-        """, (name, roll, attendance))
+            INSERT INTO students (name, roll, attendance, user_id)
+            VALUES (?, ?, ?, ?)
+            """, (name, roll, attendance, user_id))
 
         student_id = cursor.lastrowid
 
@@ -217,20 +251,24 @@ def add_student():
 @app.route("/students")
 def view_students():
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT 
-            students.id,
-            students.name,
-            students.roll,
-            students.attendance,
-            AVG(marks.marks)
-        FROM students
-        LEFT JOIN marks ON students.id = marks.student_id
-        GROUP BY students.id
-    """)
+    SELECT 
+        students.id,
+        students.name,
+        students.roll,
+        students.attendance,
+        AVG(marks.marks)
+    FROM students
+    LEFT JOIN marks ON students.id = marks.student_id
+    WHERE students.user_id = ?
+    GROUP BY students.id
+    """, (session["user_id"],))
 
     rows = cursor.fetchall()
 
@@ -284,20 +322,24 @@ def view_students():
 @app.route("/export")
 def export_csv():
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT 
-            students.id,
-            students.name,
-            students.roll,
-            students.attendance,
-            AVG(marks.marks)
-        FROM students
-        LEFT JOIN marks ON students.id = marks.student_id
-        GROUP BY students.id
-    """)
+    SELECT 
+        students.id,
+        students.name,
+        students.roll,
+        students.attendance,
+        AVG(marks.marks)
+    FROM students
+    LEFT JOIN marks ON students.id = marks.student_id
+    WHERE students.user_id = ?
+    GROUP BY students.id
+    """, (session["user_id"],))
 
     rows = cursor.fetchall()
 
@@ -346,11 +388,15 @@ def export_csv():
 
 @app.route("/delete/<int:id>")
 def delete_student(id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+    
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM marks WHERE student_id = ?", (id,))
-    cursor.execute("DELETE FROM students WHERE id = ?", (id,))
+    cursor.execute("DELETE FROM students WHERE id = ? AND user_id = ?", (id, session["user_id"]))
 
     conn.commit()
     conn.close()
@@ -360,11 +406,14 @@ def delete_student(id):
 @app.route("/edit/<int:id>")
 def edit_student(id):
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
     # Get student basic info
-    cursor.execute("SELECT * FROM students WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM students WHERE id = ? AND user_id = ?", (id, session["user_id"]))
     student = cursor.fetchone()
 
     # Get all subjects
@@ -395,6 +444,9 @@ def edit_student(id):
 @app.route("/update/<int:id>", methods=["POST"])
 def update_student(id):
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     name = request.form["name"]
     roll = request.form["roll"]
     attendance = float(request.form["attendance"])
@@ -406,8 +458,8 @@ def update_student(id):
     cursor.execute("""
         UPDATE students
         SET name = ?, roll = ?, attendance = ?
-        WHERE id = ?
-    """, (name, roll, attendance, id))
+        WHERE id = ? AND user_id = ?
+    """, (name, roll, attendance, id, session["user_id"]))
 
     # Get all subjects
     cursor.execute("SELECT * FROM subjects")
@@ -447,6 +499,9 @@ def update_student(id):
 @app.route("/subjects")
 def manage_subjects():
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
@@ -481,6 +536,9 @@ def add_subject():
 @app.route("/delete_subject/<int:id>")
 def delete_subject(id):
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
@@ -491,6 +549,55 @@ def delete_subject(id):
     conn.close()
 
     return redirect("/subjects")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = generate_password_hash(request.form["password"])
+
+        conn = sqlite3.connect("students.db")
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                "INSERT INTO users (username, password) VALUES (?, ?)",
+                (username, password)
+            )
+            conn.commit()
+            conn.close()
+            return redirect("/login")
+        except:
+            return "Username already exists"
+
+    return render_template("register.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = sqlite3.connect("students.db")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user and check_password_hash(user[2], password):
+            session["user_id"] = user[0]
+            session["username"] = username
+            return redirect("/")
+        else:
+            return "Invalid credentials"
+
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 import os
 
