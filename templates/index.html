@@ -2,7 +2,93 @@
 
 {% block content %}
 
-<h1>Welcome to Student Performance Analytics System</h1>
-<p>Backend connected successfully.</p>
+<h2 class="mb-3">Dashboard</h2>
+
+<h5>Welcome {{ session.get('username') }} 👋</h5>
+
+{% if high > 0 %}
+<div class="alert alert-danger mt-3">
+  ⚠️ Warning: {{ high }} High Risk Student(s) detected!
+</div>
+{% endif %}
+
+<!-- 🏆 Top Performer -->
+
+{% if topper %}
+
+<div class="alert alert-success mt-3 shadow">
+  🏆 Top Performer: <b>{{ topper[1] }}</b> (Avg: {{ topper[4] }})
+</div>
+{% endif %}
+
+<!-- Dashboard Cards -->
+
+<div class="row mt-4">
+
+  <div class="col-md-3">
+    <div class="card text-center shadow p-3">
+      <h6>Total Students</h6>
+      <h3>{{ total }}</h3>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-center shadow p-3">
+      <h6 class="text-danger">High Risk</h6>
+      <h3>{{ high }}</h3>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-center shadow p-3">
+      <h6 class="text-warning">Medium Risk</h6>
+      <h3>{{ medium }}</h3>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-center shadow p-3">
+      <h6 class="text-success">Low Risk</h6>
+      <h3>{{ low }}</h3>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart Section -->
+
+<div class="card mt-5 p-4 shadow">
+  <h5 class="text-center">Risk Distribution</h5>
+  <canvas id="riskChart"></canvas>
+</div>
+
+<!-- Chart.js CDN -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Chart Script -->
+
+<script>
+  const ctx = document.getElementById('riskChart');
+
+  const highVal =  high ;
+  const mediumVal =  medium ;
+  const lowVal =  low ;
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+      datasets: [{
+        label: 'Number of Students',
+        data: [highVal, mediumVal, lowVal],
+        backgroundColor: ['red', 'orange', 'green']
+      }]
+    },
+    options: {
+      responsive: true
+    }
+  });
+</script>
 
 {% endblock %}

@@ -161,6 +161,11 @@ def home():
     medium = sum(1 for s in students if s[7] == "Medium")
     low = sum(1 for s in students if s[7] == "Low")
 
+    topper = None
+
+    if students:
+        topper = max(students, key=lambda x: x[4])  # index 4 = average
+
     conn.close()
 
     return render_template(
@@ -169,7 +174,8 @@ def home():
         total=total,
         high=high,
         medium=medium,
-        low=low
+        low=low,
+        topper=topper
     )
 
 
@@ -273,17 +279,18 @@ def view_students():
     rows = cursor.fetchall()
 
     risk_filter = request.args.get("risk")
+    search = request.args.get("search")
 
     students = []
 
     for row in rows:
         student_id, name, roll, attendance, average = row
-
+    
         if average is None:
             average = 0
-
+    
         academic_risk, attendance_risk, overall_risk = calculate_risk(attendance, average)
-
+    
         student_data = (
             student_id,
             name,
@@ -294,13 +301,18 @@ def view_students():
             attendance_risk,
             overall_risk
         )
-
-        # Apply filter here
+    
+        # 🔍 Search filter
+        if search:
+            if search.lower() not in name.lower() and search not in str(roll):
+                continue
+            
+        # 🎯 Risk filter
         if risk_filter:
-            if overall_risk == risk_filter:
-                students.append(student_data)
-        else:
-            students.append(student_data)
+            if overall_risk != risk_filter:
+                continue
+            
+        students.append(student_data)
 
     # Statistics
     total = len(students)

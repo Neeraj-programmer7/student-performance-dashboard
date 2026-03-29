@@ -69,8 +69,29 @@
     </div>
 
     <a href="/export" class="btn btn-dark mb-3">
-    Download CSV Report
+        Download CSV Report
     </a>
+
+    <form method="GET" action="/students" class="row g-2 mb-3">
+
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="Search by name or roll">
+        </div>
+
+        <div class="col-md-3">
+            <select name="risk" class="form-select">
+                <option value="">All Risk</option>
+                <option value="High">High Risk</option>
+                <option value="Medium">Medium Risk</option>
+                <option value="Low">Low Risk</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-dark w-100">Search</button>
+        </div>
+
+    </form>
 
 
     <!-- ===================== CHART + TABLE ROW ===================== -->
