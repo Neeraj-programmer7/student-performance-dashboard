@@ -2,7 +2,10 @@
 
 {% block content %}
 
-<h2 class="mb-3">Dashboard</h2>
+<h1 class="mb-3">Dashboard</h1>
+<p class="text-light opacity-75">
+  Smart Student Performance Analysis System
+</p>
 
 <h5>Welcome {{ session.get('username') }} 👋</h5>
 
@@ -23,31 +26,31 @@
 
 <!-- Dashboard Cards -->
 
-<div class="row mt-4">
+<div class="row text-center mt-4">
 
   <div class="col-md-3">
-    <div class="card text-center shadow p-3">
+    <div class="glass">
       <h6>Total Students</h6>
       <h3>{{ total }}</h3>
     </div>
   </div>
 
   <div class="col-md-3">
-    <div class="card text-center shadow p-3">
+    <div class="glass">
       <h6 class="text-danger">High Risk</h6>
       <h3>{{ high }}</h3>
     </div>
   </div>
 
   <div class="col-md-3">
-    <div class="card text-center shadow p-3">
+    <div class="glass">
       <h6 class="text-warning">Medium Risk</h6>
       <h3>{{ medium }}</h3>
     </div>
   </div>
 
   <div class="col-md-3">
-    <div class="card text-center shadow p-3">
+    <div class="glass">
       <h6 class="text-success">Low Risk</h6>
       <h3>{{ low }}</h3>
     </div>
@@ -57,38 +60,44 @@
 
 <!-- Chart Section -->
 
-<div class="card mt-5 p-4 shadow">
-  <h5 class="text-center">Risk Distribution</h5>
-  <canvas id="riskChart"></canvas>
+<div class="glass mt-5 text-center">
+    <h5>Risk Distribution</h5>
+    <canvas id="riskChart" style="max-width: 400px; margin:auto;"></canvas>
 </div>
 
 <!-- Chart.js CDN -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Chart Script -->
-
 <script>
-  const ctx = document.getElementById('riskChart');
+const ctx = document.getElementById('riskChart');
 
-  const highVal =  high ;
-  const mediumVal =  medium ;
-  const lowVal =  low ;
+new Chart(ctx, {
+    type: 'pie',  // 🔥 changed from bar
 
-  new Chart(ctx, {
-    type: 'bar',
     data: {
-      labels: ['High Risk', 'Medium Risk', 'Low Risk'],
-      datasets: [{
-        label: 'Number of Students',
-        data: [highVal, mediumVal, lowVal],
-        backgroundColor: ['red', 'orange', 'green']
-      }]
+        labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+        datasets: [{
+            label: 'Students',
+            data: [{{ high }}, {{ medium }}, {{ low }}],
+            backgroundColor: [
+                '#ff4d4d',   // red
+                '#ffcc00',   // yellow
+                '#00cc66'    // green
+            ],
+            borderWidth: 1
+        }]
     },
+
     options: {
-      responsive: true
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
     }
-  });
+});
 </script>
 
 {% endblock %}

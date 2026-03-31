@@ -1,6 +1,7 @@
 import csv
 from flask import Response, session
 from flask import Flask, render_template, request, redirect
+from numpy import sort
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
@@ -114,6 +115,12 @@ def calculate_risk(attendance, avg):
 
 # Home Page
 @app.route("/")
+def landing():
+    return render_template("landing.html")
+
+   
+
+@app.route("/dashboard")
 def home():
     if "user_id" not in session:
         return redirect("/login")
@@ -161,10 +168,10 @@ def home():
     medium = sum(1 for s in students if s[7] == "Medium")
     low = sum(1 for s in students if s[7] == "Low")
 
+    # Topper logic (important)
     topper = None
-
     if students:
-        topper = max(students, key=lambda x: x[4])  # index 4 = average
+        topper = max(students, key=lambda x: x[4])
 
     conn.close()
 
@@ -177,7 +184,6 @@ def home():
         low=low,
         topper=topper
     )
-
 
 # Show Add Student Form
 @app.route("/add")
@@ -280,17 +286,18 @@ def view_students():
 
     risk_filter = request.args.get("risk")
     search = request.args.get("search")
+    sort = request.args.get("sort")
 
     students = []
 
     for row in rows:
         student_id, name, roll, attendance, average = row
-    
+
         if average is None:
             average = 0
-    
+
         academic_risk, attendance_risk, overall_risk = calculate_risk(attendance, average)
-    
+
         student_data = (
             student_id,
             name,
@@ -301,18 +308,24 @@ def view_students():
             attendance_risk,
             overall_risk
         )
-    
+
         # 🔍 Search filter
         if search:
             if search.lower() not in name.lower() and search not in str(roll):
                 continue
-            
+
         # 🎯 Risk filter
         if risk_filter:
             if overall_risk != risk_filter:
                 continue
-            
+
         students.append(student_data)
+
+        # 🔽 ADD THIS BLOCK HERE
+    if sort == "high":
+        students.sort(key=lambda x: x[4], reverse=True)  # Highest avg first
+    elif sort == "low":
+        students.sort(key=lambda x: x[4])  # Lowest avg first
 
     # Statistics
     total = len(students)
@@ -600,7 +613,7 @@ def login():
         if user and check_password_hash(user[2], password):
             session["user_id"] = user[0]
             session["username"] = username
-            return redirect("/")
+            return redirect("/dashboard")
         else:
             return "Invalid credentials"
 

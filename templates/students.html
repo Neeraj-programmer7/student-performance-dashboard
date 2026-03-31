@@ -47,28 +47,28 @@
     <div class="mb-4">
 
         <a href="/students"
-            class="btn {% if not request.args.get('risk') %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            class="btn btn-custom {% if not request.args.get('risk') %}btn-dark{% else %}btn-outline-dark{% endif %}">
             All
         </a>
 
         <a href="/students?risk=High"
-            class="btn {% if request.args.get('risk') == 'High' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+            class="btn btn-custom {% if request.args.get('risk') == 'High' %}btn-danger{% else %}btn-outline-danger{% endif %}">
             High Risk
         </a>
 
         <a href="/students?risk=Medium"
-            class="btn {% if request.args.get('risk') == 'Medium' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+            class="btn btn-custom {% if request.args.get('risk') == 'Medium' %}btn-warning{% else %}btn-outline-warning{% endif %}">
             Medium Risk
         </a>
 
         <a href="/students?risk=Low"
-            class="btn {% if request.args.get('risk') == 'Low' %}btn-success{% else %}btn-outline-success{% endif %}">
+            class="btn btn-custom {% if request.args.get('risk') == 'Low' %}btn-success{% else %}btn-outline-success{% endif %}">
             Low Risk
         </a>
 
     </div>
 
-    <a href="/export" class="btn btn-dark mb-3">
+    <a href="/export" class="btn btn-custom btn-dark mb-3">
         Download CSV Report
     </a>
 
@@ -88,10 +88,22 @@
         </div>
 
         <div class="col-md-2">
-            <button type="submit" class="btn btn-dark w-100">Search</button>
+            <button type="submit" class="btn btn-custom btn-dark w-100">Search</button>
         </div>
 
     </form>
+
+    <div class="mb-3">
+
+        <a href="/students?sort=high&search={{ request.args.get('search','') }}" class="btn btn-custom btn-success me-2">
+            Top Students ↑
+        </a>
+
+        <a href="/students?sort=low&search={{ request.args.get('search','') }}" class="btn btn-custom btn-warning">
+            Weak Students ↓
+        </a>
+
+    </div>
 
 
     <!-- ===================== CHART + TABLE ROW ===================== -->
@@ -118,10 +130,11 @@
                     <h5 class="card-title mb-3">Students List</h5>
 
                     <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
+                        <table class="table table-dark table-hover mt-3">
 
                             <thead class="table-dark">
                                 <tr>
+                                    <th>Rank</th>
                                     <th>Name</th>
                                     <th>Roll</th>
                                     <th>Attendance (%)</th>
@@ -136,6 +149,7 @@
                             <tbody>
                                 {% for student in students %}
                                 <tr>
+                                    <td>{{ loop.index }}</td>
                                     <td>{{ student[1] }}</td>
                                     <td>{{ student[2] }}</td>
                                     <td>{{ student[3] }}</td>
@@ -154,7 +168,7 @@
                                     <td>
                                         <a href="/edit/{{ student[0] }}" class="btn btn-sm btn-primary">Edit</a>
                                         <a href="/delete/{{ student[0] }}" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Are you sure?')">
+                                            onclick="return confirm('Are you sure you want to delete this student?')">
                                             Delete
                                         </a>
                                     </td>
