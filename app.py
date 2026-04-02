@@ -1,7 +1,6 @@
 import csv
 from flask import Response, session
 from flask import Flask, render_template, request, redirect
-from numpy import sort
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
@@ -241,7 +240,11 @@ def add_student():
 
     for subject in subjects:
         subject_id = subject[0]
-        mark = float(request.form[f"subject_{subject_id}"])
+        mark = request.form.get(f"subject_{subject_id}")
+        if mark:
+            mark = float(mark)
+        else:
+            mark = 0    
 
         total_marks += mark
 
@@ -539,6 +542,9 @@ def manage_subjects():
 
 @app.route("/add_subject", methods=["POST"])
 def add_subject():
+
+    if "user_id" not in session:
+        return redirect("/login")
 
     subject_name = request.form["subject_name"]
 
