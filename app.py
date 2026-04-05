@@ -241,7 +241,7 @@ def add_student():
     for subject in subjects:
         subject_id = subject[0]
         mark = request.form.get(f"subject_{subject_id}")
-        if mark:
+        if mark and mark.strip() != "":
             mark = float(mark)
         else:
             mark = 0    
