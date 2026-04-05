@@ -4,12 +4,19 @@ from flask import Flask, render_template, request, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
+import os
+
+DB_PATH = os.path.join(os.getcwd(), "students.db")
+
+def get_db():
+    return sqlite3.connect(DB_PATH)
+
 app = Flask(__name__)
 
 app.secret_key = "supersecretkey"
 
 def init_db():
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     # Students table
@@ -50,7 +57,7 @@ def init_db():
 init_db()   
 
 def create_user_table():
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -67,7 +74,7 @@ def create_user_table():
 create_user_table()
 
 def insert_default_subjects():
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     subjects = ["Maths", "Science", "English"]
@@ -124,7 +131,7 @@ def home():
     if "user_id" not in session:
         return redirect("/login")
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -191,7 +198,7 @@ def add_form():
     if "user_id" not in session:
         return redirect("/login")
     
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM subjects")
@@ -213,7 +220,7 @@ def add_student():
     roll = request.form["roll"]
     attendance = float(request.form["attendance"])
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     # Insert student first
@@ -269,7 +276,7 @@ def view_students():
     if "user_id" not in session:
         return redirect("/login")
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -353,7 +360,7 @@ def export_csv():
     if "user_id" not in session:
         return redirect("/login")
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -420,7 +427,7 @@ def delete_student(id):
     if "user_id" not in session:
         return redirect("/login")
     
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM marks WHERE student_id = ?", (id,))
@@ -437,7 +444,7 @@ def edit_student(id):
     if "user_id" not in session:
         return redirect("/login")
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     # Get student basic info
@@ -479,7 +486,7 @@ def update_student(id):
     roll = request.form["roll"]
     attendance = float(request.form["attendance"])
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     # Update student info
@@ -530,7 +537,7 @@ def manage_subjects():
     if "user_id" not in session:
         return redirect("/login")
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM subjects")
@@ -548,7 +555,7 @@ def add_subject():
 
     subject_name = request.form["subject_name"]
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     try:
@@ -570,7 +577,7 @@ def delete_subject(id):
     if "user_id" not in session:
         return redirect("/login")
 
-    conn = sqlite3.connect("students.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM marks WHERE subject_id = ?", (id,))
@@ -587,7 +594,7 @@ def register():
         username = request.form["username"]
         password = generate_password_hash(request.form["password"])
 
-        conn = sqlite3.connect("students.db")
+        conn = get_db()
         cursor = conn.cursor()
 
         try:
@@ -609,7 +616,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        conn = sqlite3.connect("students.db")
+        conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
